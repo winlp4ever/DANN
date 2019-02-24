@@ -9,9 +9,9 @@ def read_idx(fn, image=True):
         if image:
             nrows, ncols = st.unpack(">II", f.read(8))
             buf = f.read(nb_imgs * nrows * ncols)
-            data = np.frombuffer(buf, dtype=np.uint8).astype(np.float32)
+            data = np.frombuffer(buf, dtype=np.uint8)
             return nb_imgs, data.reshape(nb_imgs, nrows, ncols)
-        buf_ = g.read(nb_imgs)
+        buf_ = f.read(nb_imgs)
         labels = np.frombuffer(buf_, dtype=np.uint8)
         return labels
 
