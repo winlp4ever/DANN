@@ -7,10 +7,10 @@ class FeaturesExtractor(nn.Module):
     def __init__(self, in_features):
         super(FeaturesExtractor, self).__init__()
         self.extractor = nn.Sequential(
-            nn.Conv2d(3, 32, kernel_size=5),
+            nn.Conv2d(3, 32, kernel_size=5, padding=2),
             nn.ReLU(True),
             nn.MaxPool2d(kernel_size=2, stride=2),
-            nn.Conv2d(32, 48, kernel_size=5),
+            nn.Conv2d(32, 48, kernel_size=5, padding=2),
             nn.MaxPool2d(kernel_size=2, stride=2)
             )
         )
