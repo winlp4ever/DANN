@@ -6,19 +6,17 @@ from torch.autograd import Function
 
 
 class GradReverse(Function):
-    def __init__(self, lbda):
+    def __init__(self):
         super(GradReverse, self).__init__()
+
+    def _set_lambda(self, lbda):
         self.lbda = lbda
 
     def forward(self, x):
         return x.view_as(x)
 
     def backward(self, grad_output):
-        return grad_output * -self.lbda
-
-
-def grad_reverse(x, l):
-    return GradReverse(l)(x)
+        return grad_output.neg() * self.lbda
 
 
 class FeaturesExtractor(nn.Module):
@@ -27,9 +25,12 @@ class FeaturesExtractor(nn.Module):
         self.extractor = nn.Sequential(
             nn.Conv2d(3, 32, kernel_size=5, padding=2),
             nn.ReLU(True),
-            nn.MaxPool2d(kernel_size=2, stride=2),
+            nn.MaxPool2d(kernel_size=2, stride=2, padding=0),
             nn.Conv2d(32, 48, kernel_size=5, padding=2),
-            nn.MaxPool2d(kernel_size=2, stride=2)
+            nn.ReLU(True),
+            nn.MaxPool2d(kernel_size=2, stride=2, padding=0),
+            #nn.Conv2d(64, 128, kernel_size=5, padding=2),
+            #nn.ReLU(True),
         )
 
     def forward(self, x):
@@ -40,6 +41,7 @@ class DomainClassifier(nn.Module):
     def __init__(self, in_features, init_weight=True):
         # in features: to be fixed
         super(DomainClassifier, self).__init__()
+        self.grad_reverse = GradReverse()
         self.classifier = nn.Sequential(
             nn.Linear(in_features, 1024),
             nn.ReLU(True),
@@ -50,7 +52,8 @@ class DomainClassifier(nn.Module):
         )
 
     def forward(self, x, lbda):
-        x = grad_reverse(x, lbda)
+        self.grad_reverse._set_lambda(lbda)
+        x = self.grad_reverse(x)
         return self.classifier(x) # already take log, for binary entropy loss function
 
 

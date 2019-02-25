@@ -14,7 +14,7 @@ def read_idx(fn, image=True):
             data = np.frombuffer(buf, dtype=np.uint8)
             data = data.reshape(nb_imgs, 1, nrows, ncols)
             data = torch.from_numpy(data).float()
-            data = F.interpolate(data, size=(32, 32), mode='nearest')
+            #data = F.interpolate(data, size=(32, 32), mode='nearest')
             return nb_imgs, data
         buf_ = f.read(nb_imgs)
         labels = np.frombuffer(buf_, dtype=np.uint8)

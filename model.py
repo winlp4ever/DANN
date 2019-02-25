@@ -13,13 +13,13 @@ import os
 
 
 class Model(object):
-    def __init__(self, device):
+    def __init__(self, device, lr, momentum):
         super(Model,self).__init__()
         self.net = GradNet(init_weight=True).to(device)
-        self.criterion = nn.BCELoss()
         self.writer = SummaryWriter()
-        self.optim = optim.SGD(self.net.parameters(), lr=0.01, momentum=0.9)
+        self.optim = optim.SGD(self.net.parameters(), lr=lr, momentum=momentum)
         self.lbda = 0
+        self.lr = lr
 
     def train_epoch(self, args, device, train_loader, epoch):
 
@@ -46,21 +46,24 @@ class Model(object):
             self.optim.step()
             if batch_idx % args.log_interval == 0:
                 print('Train Epoch: {}/{} [{}/{} ({:.0f}%)]\tLoss: {:.4f}\tc_loss: {:.4f}\td_loss: {:.4f}'.format(
-                    epoch, args.epochs, batch_idx * len(X_t), len(train_loader.dataset),
+                    epoch + 1, args.epochs, batch_idx * len(X_t), len(train_loader.dataset),
                            100. * percent, loss.item(), c_l.item(), d_l.item()), end='\r', flush=True)
 
-            if epoch % args.sv_interval == 0:
-                self.save_checkpoint(args,
-                                     {
-                                         'epoch': epoch,
-                                         # 'arch': args.arch,
-                                         'state_dict': self.net.state_dict(),
-                                         'optimizer': self.optim.state_dict(),
-                                     }, epoch)
+
             c_loss += c_l.item()
             d_loss += d_l.item()
+
+        if (epoch + 1) % args.sv_interval == 0:
+            print('\nsaving model ...')
+            self.save_checkpoint(args,
+                                 {
+                                     'epoch': epoch,
+                                     # 'arch': args.arch,
+                                     'state_dict': self.net.state_dict(),
+                                     'optimizer': self.optim.state_dict(),
+                                 }, epoch)
             #pred = output.max(1, keepdim=True)[1]  # get the index of the max log-probability
-        print('\n')
+        print('')
         c_loss /= len(train_loader.dataset)
         d_loss /= len(train_loader.dataset)
         self.writer.add_scalar('c_loss', c_loss, global_step=epoch)
@@ -87,7 +90,7 @@ class Model(object):
 
     def lr_update(self, p, args):
         for param_group in self.optim.param_groups:
-            param_group['lr'] *= 0.01 / ((1 + args.alpha * p) ** args.beta)
+            param_group['lr'] = self.lr / ((1 + args.alpha * p) ** args.beta)
 
     def lbda_update(self, p, args):
         self.lbda = 2. / (1 + np.exp(-args.gamma * p)) - 1.
@@ -105,7 +108,7 @@ class Model(object):
                 correct += pred.eq(target.view_as(pred)).sum().item()
 
         test_loss /= len(test_loader.dataset)
-        print('\nTest set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(
+        print('\nTest set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)'.format(
             test_loss, correct, len(test_loader.dataset),
             100. * correct / len(test_loader.dataset)))
         if epoch is not None:
@@ -129,14 +132,12 @@ def main(args):
 
     train_loader = torch.utils.data.DataLoader(train_data, batch_size=args.batch_size, shuffle=True)
     test_loader = torch.utils.data.DataLoader(test_data, batch_size=args.test_batch_size, shuffle=True)
-    model = Model(device)
+    model = Model(device, args.lr, args.momentum)
 
     for epoch in range(args.epochs):
-        model.train_epoch(args, device, train_loader, epoch)
         if epoch % args.sv_interval == 0:
             model.test_epoch(device, test_loader, epoch)
-
-
+        model.train_epoch(args, device, train_loader, epoch)
 
 
 if __name__ == '__main__':
@@ -147,13 +148,13 @@ if __name__ == '__main__':
                         help='input batch size for testing (default: 1000)')
     parser.add_argument('--epochs', type=int, default=100, metavar='N',
                         help='number of epochs to train (default: 10)')
-    parser.add_argument('--lr', type=float, default=0.01, metavar='LR',
+    parser.add_argument('--lr', type=float, default=1e-3, metavar='LR',
                         help='learning rate (default: 0.01)')
-    parser.add_argument('--momentum', type=float, default=0.5, metavar='M',
+    parser.add_argument('--momentum', type=float, default=0.9, metavar='M',
                         help='SGD momentum (default: 0.5)')
     parser.add_argument('--seed', type=int, default=1, metavar='S',
                         help='random seed (default: 1)')
-    parser.add_argument('--log-interval', type=int, default=10, metavar='N',
+    parser.add_argument('--log-interval', type=int, default=1, metavar='N',
                         help='how many batches to wait before logging training status')
     parser.add_argument('--sv-interval', type=int, default=10)
     parser.add_argument('--ckpt-path', '-c', default='./checkpoints/', nargs='?')
