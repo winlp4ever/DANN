@@ -1,3 +1,6 @@
 data/*
 *.npy
 __pycache__/*
+checkpoints/*
+runs/*
+test.py

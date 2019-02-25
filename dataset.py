@@ -15,25 +15,30 @@ from PIL import Image
 
 
 class GradData(Dataset):
-    def __init__(self, mnist_fn, svhn_fn, im_size=32):
+    def __init__(self, mnist_fn, svhn_fn, classes=10, im_size=32, mnist_only=False, mnist_label_fn=''):
         super(GradData, self).__init__()
         self.im_size = im_size
+        self.classes = classes
         self.mnist_size, self.mnist_im = utils.read_idx(mnist_fn)
-        #self.mnist_label = utils.read_idx(mnist_fn + '_label', image=False)
-        self.svhn_size, self.svhn_im, self.svhn_label = utils.read_mat(svhn_fn)
+        if mnist_only:
+            self.mnist_label = utils.read_idx(mnist_label_fn, image=False)
+        else:
+            self.svhn_size, self.svhn_im, self.svhn_label = utils.read_mat(svhn_fn)
+        self.mnist_only = mnist_only
 
     def __len__(self):
-        return self.mnist_size + self.svhn_size
+        return self.mnist_size
 
     def __getitem__(self, idx):
-        if idx < self.mnist_size:
-            im = self.mnist_im[idx]
-            im = torch.cat([im] * 3, 0)
-            #im = F.upsample(im, size=(self.im_size, self.im_size), mode='nearest')
-            return 0, im
-        im = self.svhn_im[idx - self.mnist_size]
-        y = utils.one_hot_encoding(self.svhn_label[idx - self.mnist_size])
-        return 1, (im, y)
+
+        t_im = self.mnist_im[idx]
+        t_im = torch.cat([t_im] * 3, 0)
+        if not self.mnist_only:
+            d_im = self.svhn_im[idx]
+            d_y = self.svhn_label[idx]
+            return t_im, d_im, d_y, 1., 0.
+        t_y = self.mnist_label[idx]
+        return t_im, t_y
 
 
 def test(keyword='train'):

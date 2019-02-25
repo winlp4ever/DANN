@@ -2,9 +2,27 @@ import torch, torchvision
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
+from torch.autograd import Function
+
+
+class GradReverse(Function):
+    def __init__(self, lbda):
+        super(GradReverse, self).__init__()
+        self.lbda = lbda
+
+    def forward(self, x):
+        return x.view_as(x)
+
+    def backward(self, grad_output):
+        return grad_output * -self.lbda
+
+
+def grad_reverse(x, l):
+    return GradReverse(l)(x)
+
 
 class FeaturesExtractor(nn.Module):
-    def __init__(self, in_features):
+    def __init__(self):
         super(FeaturesExtractor, self).__init__()
         self.extractor = nn.Sequential(
             nn.Conv2d(3, 32, kernel_size=5, padding=2),
@@ -12,7 +30,6 @@ class FeaturesExtractor(nn.Module):
             nn.MaxPool2d(kernel_size=2, stride=2),
             nn.Conv2d(32, 48, kernel_size=5, padding=2),
             nn.MaxPool2d(kernel_size=2, stride=2)
-            )
         )
 
     def forward(self, x):
@@ -28,16 +45,17 @@ class DomainClassifier(nn.Module):
             nn.ReLU(True),
             nn.Linear(1024, 1024),
             nn.ReLU(True),
-            nn.Linear(1024, 1),
-            nn.LogSigmoid()
+            nn.Linear(1024, 2),
+            nn.LogSoftmax()
         )
 
-    def forward(self, x):
+    def forward(self, x, lbda):
+        x = grad_reverse(x, lbda)
         return self.classifier(x) # already take log, for binary entropy loss function
 
 
 class ClassClassifier(nn.Module):
-    def __init__(self):
+    def __init__(self, in_features):
         super(ClassClassifier, self).__init__()
         self.classifier = nn.Sequential(
             nn.Linear(in_features, 3072),
@@ -52,28 +70,24 @@ class ClassClassifier(nn.Module):
         return self.classifier(x)
 
 
-class GradReversalLayer(nn.Module):
-    def __init__(self):
-        super(GradReversalLayer, self).__init__()
-
-
-    def forward(self, x, d):
-        pass
-
-
 class GradNet(nn.Module):
     def __init__(self, init_weight):
         super(GradNet, self).__init__()
-        self.extractor = FeaturesExtractor()
-        self.domain_classfier = DomainClassifier()
-        self.class_classifier = ClassClassifier()
+        self.E = FeaturesExtractor()
+        in_features = 48 * 8 * 8
+        self.G_d = DomainClassifier(in_features)
+        self.G_c = ClassClassifier(in_features)
         if init_weight:
             self._init_weight()
 
-    def forward(self, x, y, d):
-        x = self.extractor(x)
+    def forward(self, x, lbda=None, clss=False):
+        x = self.E(x)
         x = x.view(x.size(0), -1)
-        return self.class_classifier(x), self.domain_classfier(x)
+        if lbda is None:
+            return self.G_c(x)
+        if clss:
+            return self.G_c(x), self.G_d(x, lbda)
+        return self.G_d(x, lbda)
 
     def _init_weight(self):
         for m in self.modules():
