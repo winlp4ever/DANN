@@ -23,14 +23,15 @@ class FeaturesExtractor(nn.Module):
     def __init__(self):
         super(FeaturesExtractor, self).__init__()
         self.extractor = nn.Sequential(
-            nn.Conv2d(3, 32, kernel_size=5, padding=2),
+            nn.Conv2d(3, 64, kernel_size=5, padding=2),
             nn.ReLU(True),
-            nn.MaxPool2d(kernel_size=2, stride=2, padding=0),
-            nn.Conv2d(32, 48, kernel_size=5, padding=2),
+            nn.MaxPool2d(kernel_size=3, stride=2, padding=1),
+            nn.Conv2d(64, 64, kernel_size=5, padding=2),
             nn.ReLU(True),
-            nn.MaxPool2d(kernel_size=2, stride=2, padding=0),
-            #nn.Conv2d(64, 128, kernel_size=5, padding=2),
-            #nn.ReLU(True),
+            nn.MaxPool2d(kernel_size=3, stride=2, padding=1),
+            nn.Conv2d(64, 128, kernel_size=5, padding=2),
+            nn.ReLU(True),
+            nn.Dropout(0.5)
         )
 
     def forward(self, x):
@@ -77,7 +78,7 @@ class GradNet(nn.Module):
     def __init__(self, init_weight):
         super(GradNet, self).__init__()
         self.E = FeaturesExtractor()
-        in_features = 48 * 8 * 8
+        in_features = 128 * 7 * 7
         self.G_d = DomainClassifier(in_features)
         self.G_c = ClassClassifier(in_features)
         if init_weight:

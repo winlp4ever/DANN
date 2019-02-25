@@ -17,7 +17,7 @@ class Model(object):
         super(Model,self).__init__()
         self.net = GradNet(init_weight=True).to(device)
         self.writer = SummaryWriter()
-        self.optim = optim.SGD(self.net.parameters(), lr=lr, momentum=momentum)
+        self.optim = optim.SGD(self.net.parameters(), lr=lr, momentum=momentum, weight_decay=1e-5)
         self.lbda = 0
         self.lr = lr
 
@@ -142,13 +142,13 @@ def main(args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='PyTorch MNIST Example')
-    parser.add_argument('--batch-size', type=int, default=2048, metavar='N',
+    parser.add_argument('--batch-size', type=int, default=128, metavar='N',
                         help='input batch size for training (default: 64)')
     parser.add_argument('--test-batch-size', type=int, default=1000, metavar='N',
                         help='input batch size for testing (default: 1000)')
     parser.add_argument('--epochs', type=int, default=100, metavar='N',
                         help='number of epochs to train (default: 10)')
-    parser.add_argument('--lr', type=float, default=1e-3, metavar='LR',
+    parser.add_argument('--lr', type=float, default=1e-2, metavar='LR',
                         help='learning rate (default: 0.01)')
     parser.add_argument('--momentum', type=float, default=0.9, metavar='M',
                         help='SGD momentum (default: 0.5)')

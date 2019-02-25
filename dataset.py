@@ -15,7 +15,7 @@ from PIL import Image
 
 
 class GradData(Dataset):
-    def __init__(self, mnist_fn, svhn_fn, classes=10, im_size=32, mnist_only=False, mnist_label_fn=''):
+    def __init__(self, mnist_fn, svhn_fn, classes=10, im_size=28, mnist_only=False, mnist_label_fn=''):
         super(GradData, self).__init__()
         self.im_size = im_size
         self.classes = classes
