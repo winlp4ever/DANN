@@ -138,7 +138,7 @@ def main(args):
         if epoch % args.sv_interval == 0:
             model.test_epoch(device, test_loader, epoch)
         model.train_epoch(args, device, train_loader, epoch)
-
+    model.test_epoch(device, test_loader, epoch)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='PyTorch MNIST Example')
