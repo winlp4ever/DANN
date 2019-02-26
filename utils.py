@@ -23,10 +23,9 @@ def read_idx(fn, image=True):
 def read_mat(fn):
     data = loadmat(fn)
     X = np.transpose(data['X'], (3, 2, 0, 1))
-    print(np.amax(X))
     X = torch.from_numpy(X).float()
     X = F.interpolate(X, size=(28, 28), mode='nearest') / 255.
-    y = data['y']
+    y = data['y'][:,0]
     y[y == 10] = 0
     size = X.shape[0]
     return size, X, y

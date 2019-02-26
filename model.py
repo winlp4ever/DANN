@@ -38,7 +38,7 @@ class Model(object):
             pred_d_ = self.net(X_t, self.lbda)
             pred_c, pred_d = self.net(X_d, self.lbda, True)
 
-            c_l = F.nll_loss(pred_c, y[:, 0].long())
+            c_l = F.nll_loss(pred_c, y.long())
             d_l = F.nll_loss(pred_d, d_d.long()) + F.nll_loss(pred_d_, d_t.long())
             loss = c_l + d_l
 
@@ -53,8 +53,9 @@ class Model(object):
             c_loss += c_l.item()
             d_loss += d_l.item()
 
+        print('')
         if (epoch + 1) % args.sv_interval == 0:
-            print('\nsaving model ...')
+            print('saving model ...')
             self.save_checkpoint(args,
                                  {
                                      'epoch': epoch,
@@ -63,7 +64,7 @@ class Model(object):
                                      'optimizer': self.optim.state_dict(),
                                  }, epoch)
             #pred = output.max(1, keepdim=True)[1]  # get the index of the max log-probability
-        print('')
+
         c_loss /= len(train_loader.dataset)
         d_loss /= len(train_loader.dataset)
         self.writer.add_scalar('c_loss', c_loss, global_step=epoch)
@@ -108,59 +109,8 @@ class Model(object):
                 correct += pred.eq(target.view_as(pred)).sum().item()
 
         test_loss /= len(test_loader.dataset)
-        print('\nTest set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)'.format(
-            test_loss, correct, len(test_loader.dataset),
-            100. * correct / len(test_loader.dataset)))
+
         if epoch is not None:
             self.writer.add_scalar('test_loss', test_loss, global_step=epoch)
             self.writer.add_scalar('test_correct', correct * 100. / len(test_loader), global_step=epoch)
-
-
-def main(args):
-    # Training settings
-
-    use_cuda = torch.cuda.is_available()
-    torch.manual_seed(args.seed)
-    device = torch.device("cuda" if use_cuda else "cpu")
-
-    mnist_fn = './data/mnist/train'
-    svhn_fn = './data/svhn/train'
-    mnist_test = './data/mnist/test'
-    mnist_test_label = './data/mnist/test_label'
-    train_data = GradData(mnist_fn, svhn_fn)
-    test_data = GradData(mnist_test, None, mnist_only=True, mnist_label_fn=mnist_test_label)
-
-    train_loader = torch.utils.data.DataLoader(train_data, batch_size=args.batch_size, shuffle=True)
-    test_loader = torch.utils.data.DataLoader(test_data, batch_size=args.test_batch_size, shuffle=True)
-    model = Model(device, args.lr, args.momentum)
-
-    for epoch in range(args.epochs):
-        if epoch % args.sv_interval == 0:
-            model.test_epoch(device, test_loader, epoch)
-        model.train_epoch(args, device, train_loader, epoch)
-    model.test_epoch(device, test_loader, epoch)
-
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='PyTorch MNIST Example')
-    parser.add_argument('--batch-size', type=int, default=128, metavar='N',
-                        help='input batch size for training (default: 64)')
-    parser.add_argument('--test-batch-size', type=int, default=1000, metavar='N',
-                        help='input batch size for testing (default: 1000)')
-    parser.add_argument('--epochs', type=int, default=100, metavar='N',
-                        help='number of epochs to train (default: 10)')
-    parser.add_argument('--lr', type=float, default=1e-2, metavar='LR',
-                        help='learning rate (default: 0.01)')
-    parser.add_argument('--momentum', type=float, default=0.9, metavar='M',
-                        help='SGD momentum (default: 0.5)')
-    parser.add_argument('--seed', type=int, default=1, metavar='S',
-                        help='random seed (default: 1)')
-    parser.add_argument('--log-interval', type=int, default=1, metavar='N',
-                        help='how many batches to wait before logging training status')
-    parser.add_argument('--sv-interval', type=int, default=10)
-    parser.add_argument('--ckpt-path', '-c', default='./checkpoints/', nargs='?')
-    parser.add_argument('--alpha', nargs='?', type=float, default=10)
-    parser.add_argument('--beta', nargs='?', type=float, default=0.75)
-    parser.add_argument('--gamma', nargs='?', type=float, default=10)
-    parser.add_argument('--resume', type=bool, default=False, const=True, nargs='?')
-    args = parser.parse_args()
-    main(args)
+        return test_loss, correct, len(test_loader.dataset)
