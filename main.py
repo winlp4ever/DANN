@@ -10,7 +10,7 @@ from dataset import svhnToMnist, MyData, CombinedData
 
 
 use_cuda = torch.cuda.is_available()
-torch.manual_seed(1)
+torch.manual_seed(random.randint(0, 10000))
 device = torch.device("cuda" if use_cuda else "cpu")
 
 def main(args):

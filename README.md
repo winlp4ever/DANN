@@ -26,7 +26,11 @@ Just run the command `python download_data.py` and all necessary datasets will b
 The goal was to reproduce the results claimed by the paper in the test `SVHN->Mnist`
 
 ### Training
-Type `python main.py` and the program will re-train the network from scratch. On my machine, 100 `epochs` run in roughly 10 minutes with one GTX 1080.
+Type `python main.py` and the program will re-train the network from scratch. On my machine, 100 `epochs` run in roughly 15' with one GTX 1080.
+
+Run the command 'python valid.py' to download my pretrained model and run on test sets. Results will be printed.
+
+Or put some number images in folder `images/` and run the command `python image_annotate.py -f <image-filename>`. For example, `python image_annotate -f img.jpg`
 
 ### Some technical details
 * Input image is all of size `28x28` and rescaled to `[0, 1]`

@@ -4,7 +4,6 @@ import torch.nn.functional as F
 import torch.optim as optim
 from torch.autograd import Function
 from modules import GradNet
-from dataset import GradData
 import argparse
 import numpy as np
 from tensorboardX import SummaryWriter
@@ -56,7 +55,7 @@ class Model(object):
             print('saving model ...')
             self.save_checkpoint(args,
                                  {
-                                     'epoch': epoch,
+                                     'epoch': epoch + 1,
                                      'state_dict': self.net.state_dict(),
                                      'optimizer': self.optim.state_dict(),
                                  }, epoch)
