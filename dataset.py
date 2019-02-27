@@ -66,6 +66,16 @@ def test(keyword='train'):
     print(len(data))
     print(type(data[0][0]))
     print(data[0][0].size())
+    import random
+    from torchvision import transforms
+    im, im_ = data[random.randint(0, 9999)][:2]
+    t = transforms.Compose([transforms.ToPILImage(),
+                        transforms.Resize((100, 100))])
+    im = t(im)
+    im_ = t(im_)
+    im.show()
+    im_.show()
+
 
 if __name__ == '__main__':
     test()

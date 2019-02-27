@@ -46,7 +46,7 @@ With these settings, I was able to reproduce the result in the paper, even a bit
 
 | | Paper | Me |
 | --- | --- | --- |
-| Mnist (target) | 71% | 72-74% |
+| Mnist (target) | 71% | 72-75% |
 | SVHN (source) | (not mentioned) | 93% |
 
 ### Brief Introduction
