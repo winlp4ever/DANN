@@ -42,7 +42,12 @@ Or put some number images in folder `images/` and run the command `python image_
 Other hyperparameter details are as precised in the paper.
 
 ### Results
-With these settings, I was able to reproduce the result in the paper, even a bit higher (`71%` in the paper, `72-74%` for me).
+With these settings, I was able to reproduce the result in the paper, even a bit higher.
+
+| | Paper | Me |
+| --- | --- | --- |
+| Mnist (target) | 71% | 72-74% |
+| SVHN (source) | (not mentioned) | 93% |
 
 ### Brief Introduction
 
