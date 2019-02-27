@@ -26,7 +26,7 @@ Just run the command `python download_data.py` and all necessary datasets will b
 The goal was to reproduce the results claimed by the paper in the test `SVHN->Mnist`
 
 ### Training
-Type `python main.py` and the program will re-train the network from scratch
+Type `python main.py` and the program will re-train the network from scratch. On my machine, 100 `epochs` run in roughly 10 minutes with one GTX 1080.
 
 ### Some technical details
 * Input image is all of size `28x28` and rescaled to `[0, 1]`
@@ -36,7 +36,7 @@ Type `python main.py` and the program will re-train the network from scratch
 Other hyperparameter details are as precised in the paper.
 
 ### Results
-With these settings, I was able to reproduce the result in the paper, even a bit higher (`71%` in the paper, `73-74%` for me)
+With these settings, I was able to reproduce the result in the paper, even a bit higher (`71%` in the paper, `73-74%` for me).
 
 ### Brief Introduction
 
