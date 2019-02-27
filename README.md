@@ -30,7 +30,7 @@ Type `python main.py` and the program will re-train the network from scratch. On
 
 Run the command 'python valid.py' to download my pretrained model and run on test sets. Results will be printed.
 
-Or put some number images in folder `images/` and run the command `python image_annotate.py -f <image-filename>`. For example, `python image_annotate -f img.jpg`
+Or put some number images in folder `images/` and run the command `python image_annotate.py -f <image-filename>` for some image annotations. For example, `python image_annotate -f img.jpg`
 
 ### Some technical details
 * Input image is all of size `28x28` and rescaled to `[0, 1]`
