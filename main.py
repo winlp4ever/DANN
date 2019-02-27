@@ -1,42 +1,47 @@
 import argparse
+import torch, torchvision
+from torch.utils.data import DataLoader
+import random
+
+# my files
+import utils
 from model import Model
-from dataset import GradData
-import torch
+from dataset import svhnToMnist, MyData, CombinedData
+
+
+use_cuda = torch.cuda.is_available()
+torch.manual_seed(1)
+device = torch.device("cuda" if use_cuda else "cpu")
 
 def main(args):
-    # Training settings
-
-    use_cuda = torch.cuda.is_available()
-    torch.manual_seed(args.seed)
-    device = torch.device("cuda" if use_cuda else "cpu")
-
     mnist_fn = './data/mnist/train'
     svhn_fn = './data/svhn/train'
     mnist_test = './data/mnist/test'
     mnist_test_label = './data/mnist/test_label'
     svhn_test = './data/svhn/test'
-    train_data = GradData(mnist_fn, svhn_fn)
-    mnist_test = GradData(mnist_test, None, mnist_only=True, mnist_label_fn=mnist_test_label)
-    svhn_test = GradData(None, svhn_test, svhn_only=True)
-    train_loader = torch.utils.data.DataLoader(train_data, batch_size=args.batch_size, shuffle=True)
-    mnist_test_loader = torch.utils.data.DataLoader(mnist_test, batch_size=args.test_batch_size, shuffle=True)
-    svhn_test_loader = torch.utils.data.DataLoader(svhn_test, batch_size=args.test_batch_size, shuffle=True)
+
+    train_data = svhnToMnist(mnist_fn, svhn_fn)
+    mnist_test_im = MyData(utils.read_idx, mnist_test, lambda t: torch.cat([t] * 3))
+    mnist_test_label = MyData(utils.read_idx, mnist_test_label, None, image=False)
+    mnist_test = CombinedData((mnist_test_im, mnist_test_label))
+    svhn_test =  MyData(utils.read_mat, svhn_test, None)
+
+    train_loader = DataLoader(train_data, batch_size=args.batch_size, shuffle=True)
+    mnist_test_loader = DataLoader(mnist_test, batch_size=args.test_batch_size, shuffle=True)
+    svhn_test_loader = DataLoader(svhn_test, batch_size=args.test_batch_size, shuffle=True)
     model = Model(device, args.lr, args.momentum)
 
     for epoch in range(args.epochs):
         if epoch % args.sv_interval == 0:
-            tl, tc, tle = model.test_epoch(device, mnist_test_loader, epoch)
-            print('target: mnist: avg loss {:.4f} -- accuracy {}/{} ({:.0f}%)'.format(tl, tc, tle, tc / tle * 100.))
-            dl, dc, dle = model.test_epoch(device, svhn_test_loader, epoch)
-            print('source: svhn: avg loss {:.4f} -- accuracy {}/{} ({:.0f}%)'.format(dl, dc, dle, dc / dle * 100.))
+            model.test_epoch(device, mnist_test_loader, epoch, 'Target: mnist')
+            model.test_epoch(device, svhn_test_loader, epoch, 'Source: svhn')
         model.train_epoch(args, device, train_loader, epoch)
-    tl, tc, tle = model.test_epoch(device, mnist_test_loader, epoch)
-    print('target: mnist: avg loss {:.4f} -- accuracy {}/{} ({:.0f}%)'.format(tl, tc, tle, tc / tle * 100.))
-    dl, dc, dle = model.test_epoch(device, svhn_test_loader, epoch)
-    print('source: svhn: avg loss {:.4f} -- accuracy {}/{} ({:.0f}%)'.format(dl, dc, dle, dc / dle * 100.))
+    model.test_epoch(device, mnist_test_loader, epoch, 'Target: mnist')
+    model.test_epoch(device, svhn_test_loader, epoch, 'Source: svhn')
+
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='PyTorch MNIST Example')
+    parser = argparse.ArgumentParser(description='PyTorch Domain Adaptation SVHN->Mnist')
     parser.add_argument('--batch-size', type=int, default=128, metavar='N',
                         help='input batch size for training (default: 64)')
     parser.add_argument('--test-batch-size', type=int, default=1000, metavar='N',

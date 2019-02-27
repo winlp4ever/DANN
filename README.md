@@ -36,7 +36,7 @@ Type `python main.py` and the program will re-train the network from scratch. On
 Other hyperparameter details are as precised in the paper.
 
 ### Results
-With these settings, I was able to reproduce the result in the paper, even a bit higher (`71%` in the paper, `73-74%` for me).
+With these settings, I was able to reproduce the result in the paper, even a bit higher (`71%` in the paper, `72-74%` for me).
 
 ### Brief Introduction
 

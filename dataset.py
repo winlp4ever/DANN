@@ -14,56 +14,58 @@ import os
 from PIL import Image
 
 
-class GradData(Dataset):
-    def __init__(self, mnist_fn, svhn_fn, classes=10, im_size=28, mnist_only=False, svhn_only=False, mnist_label_fn=''):
-        super(GradData, self).__init__()
-        self.im_size = im_size
-        self.classes = classes
-        if not svhn_only:
-            self.mnist_size, self.mnist_im = utils.read_idx(mnist_fn)
-        if mnist_only:
-            self.mnist_label = utils.read_idx(mnist_label_fn, image=False)
-        else:
-            self.svhn_size, self.svhn_im, self.svhn_label = utils.read_mat(svhn_fn)
-        self.mnist_only = mnist_only
-        self.svhn_only = svhn_only
+class MyData(Dataset):
+    def __init__(self, func, filename, transform, *args, **kwargs):
+        self.data = func(filename, *args, **kwargs)
+        self.transform = transform
 
     def __len__(self):
-        if self.svhn_only:
-            return self.svhn_size
-        if self.mnist_only:
-            return self.mnist_size
-        return min(self.mnist_size, self.svhn_size)
+        if isinstance(self.data, tuple):
+            return self.data[0].shape[0]
+        return self.data.shape[0]
 
     def __getitem__(self, idx):
-        if not self.svhn_only:
-            t_im = self.mnist_im[idx]
-            t_im = torch.cat([t_im] * 3, 0)
-        if self.mnist_only:
-            t_y = self.mnist_label[idx]
-            return t_im, t_y
-        d_im = self.svhn_im[idx]
-        d_y = self.svhn_label[idx]
-        if self.svhn_only:
-            return d_im, d_y
-        return t_im, d_im, d_y, 1., 0.
+        try:
+            return self.transform(self.data[idx])
+        except Exception:
+            if isinstance(self.data, tuple):
+                return tuple(d[idx] for d in self.data)
+            return self.data[idx]
+
+
+class CombinedData(Dataset):
+    def __init__(self, datasets, consts=()):
+        for d in datasets:
+            assert isinstance(d, MyData)
+        self.datasets = datasets
+        self.consts = consts
+
+    def __len__(self):
+        return min(*(len(d) for d in self.datasets))
+
+    def __getitem__(self, idx):
+        l = ()
+        for d in self.datasets:
+            if isinstance(d[idx], tuple):
+                l += d[idx]
+            else:
+                l += (d[idx],)
+        return l + self.consts
+
+
+def svhnToMnist(mnist_fn_im, svhn_fn):
+    mnist = MyData(utils.read_idx, mnist_fn_im, lambda t: torch.cat([t] * 3))
+    svhn = MyData(utils.read_mat, svhn_fn, None, im_size=28)
+    return CombinedData(datasets=(mnist,svhn), consts=(1., 0.))
+
 
 def test(keyword='train'):
     mnist_fn = os.path.join('./data/mnist', keyword)
     svhn_fn = os.path.join('./data/svhn', keyword)
-    data = GradData(mnist_fn, svhn_fn)
+    data = svhnToMnist(mnist_fn, svhn_fn)
     print(len(data))
     print(type(data[0][0]))
-
-    rand_id = np.random.randint(len(data))
-    t_im, d_im, d_y, _, _ = data[rand_id]
-    print(d)
-
-    print(t_im.size())
-    print(np.amax(t_im.numpy()))
-    im = transforms.ToPILImage()(t_im)
-    im.show()
-
+    print(data[0][0].size())
 
 if __name__ == '__main__':
     test()

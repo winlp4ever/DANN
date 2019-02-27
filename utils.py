@@ -14,21 +14,19 @@ def read_idx(fn, image=True):
             data = np.frombuffer(buf, dtype=np.uint8)
             data = data.reshape(nb_imgs, 1, nrows, ncols)
             data = torch.from_numpy(data).float() / 255.
-            #data = F.interpolate(data, size=(32, 32), mode='nearest')
-            return nb_imgs, data
+            return data
         buf_ = f.read(nb_imgs)
         labels = np.frombuffer(buf_, dtype=np.uint8)
         return labels
 
-def read_mat(fn):
+def read_mat(fn, im_size=28):
     data = loadmat(fn)
     X = np.transpose(data['X'], (3, 2, 0, 1))
     X = torch.from_numpy(X).float()
-    X = F.interpolate(X, size=(28, 28), mode='nearest') / 255.
+    X = F.interpolate(X, size=(im_size, im_size), mode='nearest') / 255.
     y = data['y'][:,0]
     y[y == 10] = 0
-    size = X.shape[0]
-    return size, X, y
+    return X, y
 
 def one_hot_encoding(y, classes=10):
     return np.eye(classes)[y]

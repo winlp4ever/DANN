@@ -1,4 +1,3 @@
-# main model, includes all modules and how info flows within, forward and backward
 import torch, torchvision
 import torch.nn as nn
 import torch.nn.functional as F
@@ -18,11 +17,9 @@ class Model(object):
         self.net = GradNet(init_weight=True).to(device)
         self.writer = SummaryWriter()
         self.optim = optim.SGD(self.net.parameters(), lr=lr, momentum=momentum, weight_decay=1e-5)
-        self.lbda = 0
         self.lr = lr
 
     def train_epoch(self, args, device, train_loader, epoch):
-
         self.net.train()
         c_loss = 0
         d_loss = 0
@@ -30,13 +27,14 @@ class Model(object):
             percent = batch_idx / len(train_loader)
             p = (epoch + percent) / args.epochs
             self.lr_update(p, args)
-            self.lbda_update(p, args)
+            lbda = self.lbda_update(p, args)
 
             X_t, X_d, y, d_t, d_d = [a.to(device) for a in data]
 
             self.optim.zero_grad()
-            pred_d_ = self.net(X_t, self.lbda)
-            pred_c, pred_d = self.net(X_d, self.lbda, True)
+            self.net._set_lambda(lbda)
+            pred_d_ = self.net(X_t, True)
+            pred_c, pred_d = self.net(X_d, True, True)
 
             c_l = F.nll_loss(pred_c, y.long())
             d_l = F.nll_loss(pred_d, d_d.long()) + F.nll_loss(pred_d_, d_t.long())
@@ -59,11 +57,9 @@ class Model(object):
             self.save_checkpoint(args,
                                  {
                                      'epoch': epoch,
-                                     # 'arch': args.arch,
                                      'state_dict': self.net.state_dict(),
                                      'optimizer': self.optim.state_dict(),
                                  }, epoch)
-            #pred = output.max(1, keepdim=True)[1]  # get the index of the max log-probability
 
         c_loss /= len(train_loader.dataset)
         d_loss /= len(train_loader.dataset)
@@ -79,7 +75,7 @@ class Model(object):
         if os.path.isfile(path):
             print("=> loading checkpoint '{}'".format(path))
             checkpoint = torch.load(path)
-            # args.start_epoch = checkpoint['epoch']
+
             self.net.load_state_dict(checkpoint['state_dict'])
             self.optim.load_state_dict(checkpoint['optimizer'])
             print("=> loaded checkpoint '{}' (epoch {})"
@@ -94,23 +90,25 @@ class Model(object):
             param_group['lr'] = self.lr / ((1 + args.alpha * p) ** args.beta)
 
     def lbda_update(self, p, args):
-        self.lbda = 2. / (1 + np.exp(-args.gamma * p)) - 1.
+        return 2. / (1 + np.exp(-args.gamma * p)) - 1.
 
-    def test_epoch(self, device, test_loader, epoch=None):
+    def test_epoch(self, device, test_loader, epoch=None, msg=''):
         self.net.eval()
         test_loss = 0
         correct = 0
         with torch.no_grad():
             for data, target in test_loader:
                 data, target = data.to(device), target.to(device).long()
-                output = self.net(data)
-                test_loss += F.nll_loss(output, target, reduction='sum').item()  # sum up batch loss
-                pred = output.max(1, keepdim=True)[1]  # get the index of the max log-probability
+                output = self.net(data, classify=True)
+                test_loss += F.nll_loss(output, target, reduction='sum').item()
+                pred = output.max(1, keepdim=True)[1]
                 correct += pred.eq(target.view_as(pred)).sum().item()
 
         test_loss /= len(test_loader.dataset)
-
+        print('\n{} test avg loss: {:.4f}, accuracy: {}/{} ({:.0f}%)\n'.format(
+            msg, test_loss, correct, len(test_loader.dataset),
+            100. * correct / len(test_loader.dataset)))
         if epoch is not None:
             self.writer.add_scalar('test_loss', test_loss, global_step=epoch)
-            self.writer.add_scalar('test_correct', correct * 100. / len(test_loader), global_step=epoch)
+            self.writer.add_scalar('test_correct', correct * 100. / len(test_loader.dataset), global_step=epoch)
         return test_loss, correct, len(test_loader.dataset)
