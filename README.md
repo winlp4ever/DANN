@@ -44,8 +44,8 @@ Recently, GAN can be seen as a newly technique that empowers the Deep Learning i
 
 The paper _Unsupervised Domain Adaptation by Backprogation_ is among the finests when it comes the domain adaptation problem as it introduces a pretty simple yet elegant technique to deal with the domain differencies. Inspired by GAN, the paper's architecture is composed of a _Feature Extractor_ E, a _Domain Classifier_ D which tries to "fool" E to forget about the domain info, and lastly a _Classifier_ C to detect image's class.
 
-A normal Neural Network is often composed only E and C, with E extracts features (high-level info) and C bases on which to classify.
+A normal Neural Network is often composed only of E and C, with E extracts features (high-level info) and C bases on which to classify.
 
-However, this approach hinders the network from being more generic. Given two datasets, one for training, one for testing. Though the twos may be of same type of data (images, audios), the network may end up behaving poorly in test.
+However, this approach hinders the network from being more generic. Given two datasets, one for training, one for testing. Though the twos may be of same type of data (number, text images, ...), the network may still end up behaving poorly in test.
 
-The difference comes from some more subtle differencies, which we called in general _domain differencies_. Images can be taken from different sources, with difference in noise nature, effects of light, colors, etc.
+The difference comes from some more subtle differencies, which we called in general _domain differencies_. Images can be taken from different sources, with difference in noise nature, effects of light, colors, etc. And that somehow has a nefast effect onto the nn's performance as the nn tends to encode these types of info also.
