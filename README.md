@@ -25,6 +25,8 @@ Just run the command `python download_data.py` and all necessary datasets will b
 
 The goal was to reproduce the results claimed by the paper in the test `SVHN->Mnist`
 
+<img src='images/illus.png' alt='datasets' align='middle'>
+
 ### Training
 Type `python main.py` and the program will re-train the network from scratch. On my machine, 100 `epochs` run in roughly 15' with one GTX 1080.
 
@@ -43,6 +45,8 @@ Other hyperparameter details are as precised in the paper.
 With these settings, I was able to reproduce the result in the paper, even a bit higher (`71%` in the paper, `72-74%` for me).
 
 ### Brief Introduction
+
+<img src='./images/architecture.png ' alt='architecture' width='800'>
 
 Recently, GAN can be seen as a newly technique that empowers the Deep Learning in tackling highly difficult tasks. Some popular examples are real-liked image generation, super resolution, style transfer, etc.
 
