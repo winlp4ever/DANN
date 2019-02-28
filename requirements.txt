@@ -1,5 +1,8 @@
-pytorch
-gzip
-tensorboardx
+pytorch::pytorch
+pytorch::torchvision
+ostrokach::gzip
+conda-forge::tensorboardx
+scipy
+scikit-image
 numpy
 matplotlib
