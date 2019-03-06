@@ -60,11 +60,14 @@ class GradNet(nn.Module):
     def forward(self, x, d_classify=False, classify=False):
         x = self.E(x)
         x = x.view(x.size(0), -1)
-        if d_classify and classify:
-            return self.G_c(x), self.G_d(x)
-        elif classify:
-            return self.G_c(x)
-        return self.G_d(x)
+        if d_classify:
+            y = self.grad_revers(x)
+            y = self.G_d(x)
+            if classify:
+                return self.G_c(x), y
+            else:
+                return y
+        return self.G_c(x)
 
     def _init_weight(self):
         for m in self.modules():

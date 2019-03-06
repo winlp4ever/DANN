@@ -14,7 +14,10 @@ The paper can be found [here](https://arxiv.org/pdf/1409.7495.pdf).
 * numpy
 * matplotlib
 ```
-If you have a Nvidia GPU, you can simply install all requirements via command: `conda install --file requirements.txt`. Otherwise, please comment out the `pytorch` line in `requirements.txt`, run the above command, and install `pytorch-cpu` with `conda install pytorch-cpu torchvision-cpu -c pytorch`.
+
+Following all steps:
+
+If you have a Nvidia GPU, you can simply install all requirements via command: `conda install --file requirements.txt`. Otherwise, please comment out the `pytorch` and `torchvision` lines in `requirements.txt`, run the above command, and install `pytorch-cpu` with `conda install pytorch-cpu torchvision-cpu -c pytorch`.
 
 ### Download Data
 Just run the command `python download_data.py` and all necessary datasets will be downloaded to `./data`. Here includes:
