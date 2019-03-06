@@ -62,7 +62,7 @@ class GradNet(nn.Module):
         x = x.view(x.size(0), -1)
         if d_classify:
             y = self.grad_revers(x)
-            y = self.G_d(x)
+            y = self.G_d(y)
             if classify:
                 return self.G_c(x), y
             else:
