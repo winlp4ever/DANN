@@ -38,7 +38,7 @@ use_cuda = torch.cuda.is_available()
 torch.manual_seed(random.randint(0, 10000))
 device = torch.device("cuda" if use_cuda else "cpu")
 
-mnist_test_im = MyData(utils.read_idx, mnist_test, lambda t: torch.cat([t] * 3))
+mnist_test_im = MyData(utils.read_idx, mnist_test, None)
 mnist_test_label = MyData(utils.read_idx, mnist_test_label, None, image=False)
 mnist_test = CombinedData((mnist_test_im, mnist_test_label))
 svhn_test =  MyData(utils.read_mat, svhn_test, None)

@@ -26,6 +26,11 @@ class MyData(Dataset):
 
     def __getitem__(self, idx):
         try:
+            if isinstance(self.data, tuple):
+                item = (self.transform(self.data[0][idx]),)
+                for i in range(len(self.data) - 1):
+                    item += (self.data[i + 1][idx],)
+                return item
             return self.transform(self.data[idx])
         except Exception:
             if isinstance(self.data, tuple):
@@ -54,8 +59,11 @@ class CombinedData(Dataset):
 
 
 def svhnToMnist(mnist_fn_im, svhn_fn):
-    mnist = MyData(utils.read_idx, mnist_fn_im, lambda t: torch.cat([t] * 3))
-    svhn = MyData(utils.read_mat, svhn_fn, None, im_size=28)
+    trans = transforms.Compose([transforms.RandomCrop(size=28, padding=4),
+                                transforms.ColorJitter(brightness=0.4, contrast=0.4, saturation=0.4),])
+
+    mnist = MyData(utils.read_idx, mnist_fn_im, trans)
+    svhn = MyData(utils.read_mat, svhn_fn, trans, im_size=28)
     return CombinedData(datasets=(mnist,svhn), consts=(1., 0.))
 
 
